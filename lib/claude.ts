@@ -96,7 +96,7 @@ ${data.additionalInfo?.recentStress ? `- 나의 최근 스트레스: ${data.addi
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-5",
+        model: "claude-sonnet-4-6",
         max_tokens: 2000,
         messages: [
           {
