@@ -9,8 +9,6 @@ export default function TestStart() {
   const [formData, setFormData] = useState({
     gender: "" as "1" | "2" | "",
     age: "",
-    password: "",
-    confirmPassword: "",
   });
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -34,14 +32,6 @@ export default function TestStart() {
       newErrors.age = "10세에서 100세 사이의 나이를 입력해주세요.";
     }
 
-    if (!formData.password || formData.password.length < 4) {
-      newErrors.password = "암호는 최소 4자 이상이어야 합니다.";
-    }
-
-    if (formData.password !== formData.confirmPassword) {
-      newErrors.confirmPassword = "암호가 일치하지 않습니다.";
-    }
-
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -54,7 +44,6 @@ export default function TestStart() {
       sessionStorage.setItem("testData", JSON.stringify({
         gender: formData.gender,
         age: formData.age,
-        password: formData.password,
       }));
 
       // 검사 문항 페이지로 이동
@@ -133,45 +122,6 @@ export default function TestStart() {
             />
             {errors.age && (
               <p className="text-sm text-red-400">{errors.age}</p>
-            )}
-          </div>
-
-          {/* 암호 */}
-          <div className="space-y-3">
-            <label htmlFor="password" className="block text-sm font-semibold text-amber-300">
-              암호 설정 <span className="text-amber-500">*</span>
-            </label>
-            <input
-              type="password"
-              id="password"
-              value={formData.password}
-              onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border-2 border-stone-600 bg-stone-900/50 text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none transition-colors"
-              placeholder="최소 4자 이상"
-            />
-            {errors.password && (
-              <p className="text-sm text-red-400">{errors.password}</p>
-            )}
-            <p className="text-sm text-stone-400">
-              결과 재조회 시 필요하므로 기억해주세요.
-            </p>
-          </div>
-
-          {/* 암호 확인 */}
-          <div className="space-y-3">
-            <label htmlFor="confirmPassword" className="block text-sm font-semibold text-amber-300">
-              암호 확인 <span className="text-amber-500">*</span>
-            </label>
-            <input
-              type="password"
-              id="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-              className="w-full px-4 py-3 rounded-xl border-2 border-stone-600 bg-stone-900/50 text-stone-200 placeholder-stone-500 focus:border-amber-500 focus:outline-none transition-colors"
-              placeholder="암호를 다시 입력하세요"
-            />
-            {errors.confirmPassword && (
-              <p className="text-sm text-red-400">{errors.confirmPassword}</p>
             )}
           </div>
 

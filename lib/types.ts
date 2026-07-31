@@ -84,9 +84,7 @@ export interface TestResult {
   responses: Responses;
   rawScores: RawScores;
   tScoresNorm: TScores;
-  tScoresCumulative: TScores;
   percentilesNorm: Percentiles;
-  percentilesCumulative: Percentiles;
   additionalInfo?: AdditionalInfo;
   aiInterpretation?: string;
   createdAt: Date;

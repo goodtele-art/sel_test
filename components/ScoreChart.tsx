@@ -15,43 +15,27 @@ import { scaleNames } from "@/lib/questions";
 
 interface ScoreChartProps {
   scores: {
-    mach: { norm: number; cumulative: number };
-    narc: { norm: number; cumulative: number };
-    psyc: { norm: number; cumulative: number };
-    sadi: { norm: number; cumulative: number };
+    mach: number;
+    narc: number;
+    psyc: number;
+    sadi: number;
   };
 }
 
 export default function ScoreChart({ scores }: ScoreChartProps) {
   // 차트 데이터 변환
   const chartData = [
-    {
-      name: scaleNames.mach,
-      규준: scores.mach.norm,
-      누적: scores.mach.cumulative,
-    },
-    {
-      name: scaleNames.narc,
-      규준: scores.narc.norm,
-      누적: scores.narc.cumulative,
-    },
-    {
-      name: scaleNames.psyc,
-      규준: scores.psyc.norm,
-      누적: scores.psyc.cumulative,
-    },
-    {
-      name: scaleNames.sadi,
-      규준: scores.sadi.norm,
-      누적: scores.sadi.cumulative,
-    },
+    { name: scaleNames.mach, T점수: scores.mach },
+    { name: scaleNames.narc, T점수: scores.narc },
+    { name: scaleNames.psyc, T점수: scores.psyc },
+    { name: scaleNames.sadi, T점수: scores.sadi },
   ];
 
   return (
     <div className="w-full bg-gradient-to-br from-stone-800/80 to-neutral-800/80 backdrop-blur-sm rounded-2xl shadow-2xl border border-amber-500/20 p-6">
       <h3 className="text-lg font-semibold text-amber-400 mb-4 flex items-center gap-2">
         <span className="w-1 h-6 bg-gradient-to-b from-amber-400 to-amber-600 rounded-full"></span>
-        T점수 비교 그래프
+        T점수 그래프
       </h3>
 
       <div className="w-full" style={{ height: "400px" }}>
@@ -133,14 +117,8 @@ export default function ScoreChart({ scores }: ScoreChartProps) {
             />
 
             <Bar
-              dataKey="규준"
+              dataKey="T점수"
               fill="#f59e0b"
-              radius={[8, 8, 0, 0]}
-              maxBarSize={60}
-            />
-            <Bar
-              dataKey="누적"
-              fill="#d97706"
               radius={[8, 8, 0, 0]}
               maxBarSize={60}
             />
@@ -152,11 +130,7 @@ export default function ScoreChart({ scores }: ScoreChartProps) {
       <div className="mt-4 text-sm text-stone-400 space-y-1.5">
         <p className="flex items-center gap-2">
           <span className="w-3 h-3 bg-amber-500 rounded"></span>
-          <span className="font-semibold text-amber-400">규준</span>: 기존 규준 데이터 기반 T점수
-        </p>
-        <p className="flex items-center gap-2">
-          <span className="w-3 h-3 bg-amber-600 rounded"></span>
-          <span className="font-semibold text-amber-500">누적</span>: 실시자 누적 데이터 기반 T점수
+          <span className="font-semibold text-amber-400">T점수</span>: 규준 데이터 기반
         </p>
         <p className="flex items-center gap-2">
           <span className="text-amber-500">✦</span>

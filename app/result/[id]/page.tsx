@@ -9,8 +9,6 @@ import {
   calculateRawScores,
   calculateNormTScores,
   calculateNormPercentiles,
-  calculateCumulativeTScores,
-  calculateCumulativePercentiles,
 } from "@/lib/scoring";
 
 export default function ResultPage({
@@ -48,10 +46,6 @@ export default function ResultPage({
         // 백분위 계산 (규준 기반)
         const percentilesNorm = await calculateNormPercentiles(rawScores);
 
-        // 누적 데이터 기반
-        const tScoresCumulative = await calculateCumulativeTScores(rawScores);
-        const percentilesCumulative = await calculateCumulativePercentiles(rawScores);
-
         // 결과 객체 생성
         const resultData = {
           id: params.id,
@@ -59,9 +53,7 @@ export default function ResultPage({
           age: parseInt(data.age),
           rawScores,
           tScoresNorm,
-          tScoresCumulative,
           percentilesNorm,
-          percentilesCumulative,
           aiInterpretation: null,
         };
 
@@ -161,24 +153,9 @@ export default function ResultPage({
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-amber-200 via-amber-100 to-stone-200 bg-clip-text text-transparent">
             검사 결과
           </h1>
-        </div>
-
-        {/* 결과 ID 안내 */}
-        <div className="bg-gradient-to-r from-blue-900/40 to-indigo-900/40 backdrop-blur-sm rounded-2xl shadow-2xl border-2 border-blue-500/30 p-6">
-          <div className="text-center space-y-3">
-            <p className="text-blue-300 text-sm font-medium">📋 결과 조회용 ID</p>
-            <div className="bg-stone-900/50 rounded-xl px-6 py-4 inline-block">
-              <p className="text-4xl md:text-5xl font-bold text-amber-400 tracking-wider font-mono">
-                {result.id}
-              </p>
-            </div>
-            <p className="text-stone-300 text-sm">
-              이 ID를 기억하시면 나중에 결과를 다시 조회할 수 있습니다
-            </p>
-            <p className="text-stone-400 text-xs">
-              {result.gender === 1 ? "남성" : "여성"}, {result.age}세
-            </p>
-          </div>
+          <p className="text-stone-400 text-sm">
+            {result.gender === 1 ? "남성" : "여성"}, {result.age}세
+          </p>
         </div>
 
         {/* 원점수 요약 */}
@@ -211,28 +188,16 @@ export default function ResultPage({
         {/* T점수 그래프 */}
         <ScoreChart
           scores={{
-            mach: {
-              norm: result.tScoresNorm.mach,
-              cumulative: result.tScoresCumulative.mach,
-            },
-            narc: {
-              norm: result.tScoresNorm.narc,
-              cumulative: result.tScoresCumulative.narc,
-            },
-            psyc: {
-              norm: result.tScoresNorm.psyc,
-              cumulative: result.tScoresCumulative.psyc,
-            },
-            sadi: {
-              norm: result.tScoresNorm.sadi,
-              cumulative: result.tScoresCumulative.sadi,
-            },
+            mach: result.tScoresNorm.mach,
+            narc: result.tScoresNorm.narc,
+            psyc: result.tScoresNorm.psyc,
+            sadi: result.tScoresNorm.sadi,
           }}
         />
 
         {/* 척도별 해석 */}
         <div className="space-y-6">
-          <h2 className="text-2xl font-bold text-gray-900">척도별 해석</h2>
+          <h2 className="text-2xl font-bold text-amber-200">척도별 해석</h2>
           {scales.map((scale) => (
             <InterpretationSection
               key={scale}

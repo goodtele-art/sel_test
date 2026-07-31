@@ -73,7 +73,7 @@ export default function Home() {
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
-                점수 산출: T점수 (규준 기반 + 누적 데이터 기반)
+                점수 산출: T점수 (규준 데이터 기반)
               </li>
               <li className="flex items-center gap-2">
                 <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
@@ -94,16 +94,6 @@ export default function Home() {
               <span className="text-xl">→</span>
             </span>
           </Link>
-
-          <Link
-            href="/retrieve"
-            className="block w-full bg-stone-800/50 hover:bg-stone-700/50 text-stone-200 font-semibold py-4 px-6 rounded-xl shadow-lg border-2 border-stone-600/50 hover:border-amber-500/50 transition-all duration-300 text-center active:scale-98 backdrop-blur-sm"
-          >
-            <span className="flex items-center justify-center gap-2">
-              <span>이전 결과 조회하기</span>
-              <span className="text-amber-400">↻</span>
-            </span>
-          </Link>
         </div>
 
         {/* 주의사항 */}
@@ -111,10 +101,6 @@ export default function Home() {
           <p className="flex items-center justify-center gap-2">
             <span className="text-amber-500">✦</span>
             본 검사는 상담 전문가를 위한 교육용 도구입니다.
-          </p>
-          <p className="flex items-center justify-center gap-2">
-            <span className="text-amber-500">✦</span>
-            검사 결과는 암호로 저장되며, 언제든지 재조회할 수 있습니다.
           </p>
         </div>
       </main>
