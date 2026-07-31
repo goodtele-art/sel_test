@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { generateInterpretation } from "@/lib/claude";
 
+// 긴 해석문 생성에 30초 이상 걸릴 수 있어 기본 타임아웃으로는 부족함
+export const maxDuration = 120;
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();

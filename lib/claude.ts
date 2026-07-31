@@ -64,17 +64,19 @@ ${data.additionalInfo?.recentStress ? `- 나의 최근 스트레스: ${data.addi
 
 다음 내용을 포함하되, **마크다운 기호(#, ##, ###, ####, -, *)를 일절 사용하지 말고**, 자연스러운 문장으로 작성해주세요:
 
-먼저 전체적인 성격 프로필에 대해 이야기해주세요. (150-200자)
+먼저 전체적인 성격 프로필에 대해 이야기해주세요. (300-400자)
 4가지 척도를 종합하여 전반적인 성격 특징을 따뜻하게 설명해주세요.
 
-그 다음 각 척도별로 구체적으로 이야기해주세요. (각 100-150자)
+그 다음 각 척도별로 구체적으로 이야기해주세요. (각 200-300자)
 "마키아벨리즘에 대해 말씀드리자면...", "나르시시즘을 보면...", "사이코패시는..." , "사디즘의 경우..." 같은 자연스러운 말투로 시작하여, T점수와 입력한 정보를 고려하여 설명해주세요.
 
-그리고 상담 관계에서의 시사점을 이야기해주세요. (150-200자)
+그리고 상담 관계에서의 시사점을 이야기해주세요. (300-400자)
 성격 특성이 상담 관계에 미치는 영향을 설명하되, '잘 이해되는 내담자'와 '어려운 내담자' 정보를 반드시 언급해주세요.
 
-마지막으로 자기 성찰과 발전 방향을 제안해주세요. (150-200자)
+마지막으로 자기 성찰과 발전 방향을 제안해주세요. (300-400자)
 따뜻하게 격려하면서 구체적인 조언을 해주세요. 최근 스트레스도 고려해주세요.
+
+**반드시 마지막 문단까지 문장을 완결지어 마무리해주세요. 중간에 끊기지 않도록 해주세요.**
 
 ---
 
@@ -97,7 +99,7 @@ ${data.additionalInfo?.recentStress ? `- 나의 최근 스트레스: ${data.addi
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-6",
-        max_tokens: 2000,
+        max_tokens: 12000,
         messages: [
           {
             role: "user",
@@ -114,6 +116,12 @@ ${data.additionalInfo?.recentStress ? `- 나의 최근 스트레스: ${data.addi
 
     const data = await response.json();
     const textContent = data.content?.find((block: any) => block.type === "text");
+
+    if (data.stop_reason === "max_tokens") {
+      console.warn(
+        `해석이 max_tokens에서 잘렸습니다 (출력 ${data.usage?.output_tokens} 토큰). max_tokens 상향 필요.`
+      );
+    }
 
     if (textContent && textContent.text) {
       return textContent.text;

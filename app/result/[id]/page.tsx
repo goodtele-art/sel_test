@@ -221,7 +221,7 @@ export default function ResultPage({
               <div className="text-center space-y-4">
                 <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-400 mx-auto" />
                 <p className="text-purple-300">AI가 검사 결과를 분석하고 있습니다...</p>
-                <p className="text-purple-400 text-sm">약 10-15초 소요됩니다</p>
+                <p className="text-purple-400 text-sm">약 30초-1분 소요됩니다</p>
               </div>
             </div>
           </div>
