@@ -7,9 +7,9 @@
 ### 핵심 특징
 
 - **모바일 우선 설계**: 강의장 환경에서 참가자들이 스마트폰으로 실시
-- **이중 T점수 시스템**: 규준 데이터 + 실시자 누적 데이터 기반 비교
-- **두 가지 해석 방식**: AI 맞춤 해석 vs 일반 해석
-- **실시간 데이터 수집**: 강의 중 참가자 데이터를 수집하여 심리검사 교육 자료로 활용
+- **규준 기반 T점수**: 타당화 표본(`public/norm-data.csv`) 기준 표준화
+- **두 가지 해석 방식**: AI 맞춤 해석(Claude) vs 일반 해석(사전 정의)
+- **서버 상태 없음**: DB가 없어 결과는 세션 스토리지에만 남는다(브라우저 닫으면 소멸)
 
 ## 기술 스택
 
@@ -21,14 +21,13 @@
 - **State Management**: React Hooks + Session Storage
 
 ### Backend
-- **API Routes**: Next.js API Routes
-- **Database**: Vercel Postgres (예정)
-- **AI**: Claude API (Anthropic) - 맞춤 해석용
-- **Security**: bcrypt (암호 해싱)
+- **API Routes**: Next.js API Routes — `/api/interpret` 하나뿐
+- **Database**: 없음 (세션 스토리지만 사용)
+- **AI**: Claude API (Anthropic) `claude-sonnet-4-6` — 맞춤 해석용
 
 ### Deployment
-- **Platform**: Vercel
-- **Validation**: Zod
+- **Platform**: Vercel — 프로젝트 `dark-tetrad-test`, repo `goodtele-art/dark`
+- **URL**: https://dark-tetrad-test.vercel.app
 
 ## 검사 구성
 
@@ -49,35 +48,26 @@
 ```
 DARK_TETRAD/
 ├── app/                           # Next.js App Router
-│   ├── page.tsx                   # 랜딩: 검사 시작 / 재조회
+│   ├── page.tsx                   # 랜딩: 검사 시작
 │   ├── test/
-│   │   ├── page.tsx              # 인구통계 정보 입력
+│   │   ├── page.tsx              # 인구통계 정보 입력 (성별·나이)
 │   │   └── questions/page.tsx    # 23문항 검사 (4페이지)
 │   ├── information/page.tsx       # 추가 정보 입력 + 해석 방식 선택
 │   ├── result/[id]/page.tsx      # 결과 표시
-│   ├── retrieve/page.tsx          # 재조회 (예정)
-│   └── api/                       # API Routes (예정)
-│       ├── test/submit/route.ts   # 검사 결과 저장
-│       ├── test/retrieve/route.ts # 결과 조회
-│       └── interpret/route.ts     # Claude API 호출
+│   └── api/
+│       └── interpret/route.ts     # Claude API 호출 (유일한 API 라우트)
 ├── components/                    # React 컴포넌트
 │   ├── ScoreChart.tsx            # Recharts 그래프 (4개 척도)
 │   └── InterpretationSection.tsx # 척도별 해석 표시
 ├── lib/                          # 핵심 로직
 │   ├── types.ts                  # TypeScript 타입 정의
 │   ├── questions.ts              # 23개 문항 데이터
-│   ├── scoring.ts                # T점수, 백분위 계산
+│   ├── scoring.ts                # T점수, 백분위 계산 (규준 기반)
 │   ├── interpretations.ts        # 척도별 기본 해석
 │   ├── generalInterpretations.ts # 일반 해석 (나이/성별/T점수 기반)
-│   ├── db.ts                     # DB 연결 (예정)
-│   └── claude.ts                 # Claude API 통합 (예정)
-├── utils/                        # 유틸리티
-│   ├── validation.ts             # Zod 스키마 (예정)
-│   └── password.ts               # bcrypt 해싱 (예정)
-├── public/
-│   └── norm-data.csv             # 규준 데이터 (사용자 제공)
-└── scripts/
-    └── init-db.sql               # DB 초기화 스크립트 (예정)
+│   └── claude.ts                 # Claude API 통합
+└── public/
+    └── norm-data.csv             # 규준 데이터 (사용자 제공, UTF-8)
 ```
 
 ## 주요 기능
@@ -85,14 +75,13 @@ DARK_TETRAD/
 ### 1. 검사 플로우
 
 #### 1.1 랜딩 페이지 (/)
-- "검사 시작하기" 버튼
-- "이전 결과 조회하기" 버튼
+- "검사 시작하기" 버튼 (단일 진입점)
 
 #### 1.2 인구통계 정보 입력 (/test)
 - 성별 선택 (남성/여성)
 - 나이 입력
-- 암호 설정 (결과 재조회용)
 - 모바일 최적화된 큰 터치 영역
+- ⚠️ 암호 입력란 없음 — 재조회 기능이 없어 2026-08-08 제거
 
 #### 1.3 검사 진행 (/test/questions)
 - **4페이지 구성**:
@@ -108,11 +97,12 @@ DARK_TETRAD/
 
 #### 1.4 추가 정보 입력 (/information)
 - **안내 문구** (파란색 박스, 맨 위 배치)
-- **입력 필드** (선택사항):
-  - 성격 특성
-  - 성장 과정
-  - 스트레스 요인
-  - 기타 정보
+- **입력 필드** (모두 선택사항, 상담자 자기이해 5문항):
+  - `myPersonality` 내가 생각하는 나의 성격
+  - `childhoodEvent` 어린 시절 생각나는 중요한 사건
+  - `comfortableClients` 나에게 잘 이해되는 내담자
+  - `difficultClients` 나에게 불편한/어려운 내담자
+  - `recentStress` 나의 최근 스트레스
 - **두 가지 해석 방식 선택**:
   - 🤖 **내 정보로 해석하기** (보라색 버튼)
     - 입력한 정보를 Claude API에 전달
@@ -124,8 +114,7 @@ DARK_TETRAD/
 #### 1.5 결과 표시 (/result/[id])
 - **원점수 요약**: 4개 척도별 점수 (Mach, Narc, Psyc, Sadi)
 - **T점수 그래프** (Recharts):
-  - 규준 기반 T점수 (파란색)
-  - 누적 데이터 기반 T점수 (주황색)
+  - 규준 기반 T점수 단일 막대 (앰버)
   - 기준선: T=40 (낮음), T=50 (평균), T=60 (높음)
 - **척도별 해석**:
   - T점수, 백분위
@@ -157,17 +146,14 @@ rawScores = {
 T = 50 + 10 * (X - M) / SD
 ```
 
-#### 2.3 누적 데이터 기반 T점수
-```typescript
-// test_results 테이블에서 실시자 데이터 통계 계산
-// 동일 공식 적용
-// 데이터 부족 시 (N < 30) 규준 데이터 사용
-```
+#### 2.3 백분위 계산
+T점수를 Z점수로 바꿔 정규분포 CDF 근사식으로 환산한다(`tScoreToPercentile`).
+표본 순위 방식이 아니므로 T점수와 항상 일관된다.
 
-#### 2.4 백분위 계산
-```typescript
-percentile = (해당 점수 이하 인원 / 전체 인원) * 100
-```
+> **누적 데이터 기반 T점수는 없다.** DB가 없어 실시자 누적 통계를 낼 수 없다.
+> 2026-08-08 이전 코드에 있던 `calculateCumulativeTScores`는 실제 누적값이 아니라
+> 원점수로 만든 시드 변형(`(rawScore*7%5-2)*1.5`)을 규준 T에 더한 **시뮬레이션**이었고,
+> 근거 없는 수치를 강의에서 제시하게 되므로 제거했다. 복원하려면 Supabase 연동이 선행돼야 한다.
 
 ### 3. 해석 시스템
 
@@ -188,126 +174,48 @@ percentile = (해당 점수 이하 인원 / 전체 인원) * 100
   - 사이코패시: 충동성과 규칙 위반
   - 사디즘: 타인의 고통에서 느끼는 즐거움
 
-#### 3.2 AI 맞춤 해석 (예정)
-- Claude API 활용
-- 프롬프트 구성:
-  - 검사 결과 (4개 척도 T점수, 백분위)
-  - 내담자 정보 (나이, 성별, 성격, 성장과정, 스트레스)
-- 출력:
-  - 종합적 성격 특성
-  - 내담자 정보와 검사 결과의 연관성
-  - 상담 시 주의점 및 접근 방향
-  - 강점과 발전 가능한 영역
+#### 3.2 AI 맞춤 해석 (`lib/claude.ts`)
+- **모델 `claude-sonnet-4-6`**, Anthropic SDK 대신 **fetch로 직접 호출**(Vercel 환경 이슈로 411e39d에서 전환).
+- 문체: 선배 상담자가 쓰는 **따뜻한 편지** — 마크다운 기호 금지, 2인칭("선생님") 사용.
+- 입력: T점수·백분위·원점수 + `/information`에서 받은 상담자 자기이해 5문항
+  (`myPersonality`, `childhoodEvent`, `comfortableClients`, `difficultClients`, `recentStress`).
+- 구성: 전체 프로필(300~400자) → 척도별 4개(각 200~300자) → 상담 관계 시사점 → 자기 성찰. 실제 출력 2,200자 내외.
+- ⚠️ **`max_tokens`는 12000**. 한국어는 토큰 소모가 커서 2000에서는 마지막 문단이
+  문장 중간에 잘렸다(에러 없이 조용히). 응답의 `stop_reason === "max_tokens"`면 경고 로그를 남긴다.
+- ⚠️ `/api/interpret`에 `export const maxDuration = 120` — 분량이 늘어 생성이 길어졌다.
 
-## 데이터베이스 설계 (예정)
+## 데이터베이스 (미구현)
 
-### test_results 테이블
-```sql
-CREATE TABLE test_results (
-  id SERIAL PRIMARY KEY,
-  password_hash VARCHAR(255) NOT NULL,
-  gender SMALLINT NOT NULL,  -- 1: 남성, 2: 여성
-  age INTEGER NOT NULL,
-  age_group VARCHAR(20),     -- youth, young_adult, middle_age, senior
+**DB는 연결돼 있지 않다.** Supabase/Postgres 연동, `test_results`/`norm_data` 테이블,
+bcrypt 암호 해싱, Zod 검증 모두 없다. 규준 통계는 매 요청 시 클라이언트가
+`public/norm-data.csv`를 fetch해 평균·표준편차를 계산한다.
 
-  -- 23개 문항 응답 (1-5)
-  dtmc1 SMALLINT, dtmc2 SMALLINT, ..., dtsd6 SMALLINT,
-
-  -- 원점수
-  mach_raw_score INTEGER,
-  narc_raw_score INTEGER,
-  psyc_raw_score INTEGER,
-  sadi_raw_score INTEGER,
-
-  -- 규준 기반 T점수
-  mach_t_norm DECIMAL(5,2),
-  narc_t_norm DECIMAL(5,2),
-  psyc_t_norm DECIMAL(5,2),
-  sadi_t_norm DECIMAL(5,2),
-
-  -- 누적 기반 T점수
-  mach_t_cumulative DECIMAL(5,2),
-  narc_t_cumulative DECIMAL(5,2),
-  psyc_t_cumulative DECIMAL(5,2),
-  sadi_t_cumulative DECIMAL(5,2),
-
-  -- 백분위
-  mach_percentile INTEGER,
-  narc_percentile INTEGER,
-  psyc_percentile INTEGER,
-  sadi_percentile INTEGER,
-
-  -- 추가 정보 (AI 해석용)
-  personality_description TEXT,
-  growth_background TEXT,
-  stress_factors TEXT,
-  other_info TEXT,
-
-  -- 해석
-  interpretation_type VARCHAR(20),  -- 'ai' or 'general'
-  ai_interpretation TEXT,
-
-  -- 메타데이터
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### norm_data 테이블
-```sql
-CREATE TABLE norm_data (
-  id SERIAL PRIMARY KEY,
-  gender SMALLINT,
-  age INTEGER,
-  age_group VARCHAR(20),
-
-  -- 23개 문항 응답
-  dtmc1 SMALLINT, dtmc2 SMALLINT, ..., dtsd6 SMALLINT,
-
-  -- 원점수
-  mach_raw_score INTEGER,
-  narc_raw_score INTEGER,
-  psyc_raw_score INTEGER,
-  sadi_raw_score INTEGER
-);
-```
+결과는 **세션 스토리지에만** 남고 브라우저를 닫으면 사라진다. 강의에서 참가자 데이터를
+모으려면 Supabase 연동이 선행돼야 하며, 그때 비로소 누적 T점수·결과 재조회가 의미를 갖는다.
 
 ## 구현 상태
 
-### ✅ 완료된 기능
-- [x] Next.js 프로젝트 초기화
-- [x] TypeScript 타입 정의 (lib/types.ts)
-- [x] 23개 검사 문항 작성 및 순서 섞기 (lib/questions.ts)
-- [x] 랜딩 페이지 (app/page.tsx)
-- [x] 인구통계 정보 입력 (app/test/page.tsx)
-- [x] 검사 문항 페이지 - 4페이지 구성 (app/test/questions/page.tsx)
-- [x] 추가 정보 입력 + 해석 방식 선택 (app/information/page.tsx)
-- [x] 결과 페이지 (app/result/[id]/page.tsx)
-- [x] T점수 계산 로직 (lib/scoring.ts)
-- [x] 기본 해석 (lib/interpretations.ts)
-- [x] 일반 해석 시스템 (lib/generalInterpretations.ts)
-- [x] ScoreChart 컴포넌트 (Recharts)
-- [x] InterpretationSection 컴포넌트
-- [x] 규준 데이터 파일 복사 (public/norm-data.csv)
-- [x] 세션 스토리지 기반 데이터 관리
-- [x] **세션 스토리지 초기화** - 검사 시작 시 이전 데이터 자동 삭제
-- [x] **다크 테마 전체 적용** - 모든 페이지 및 컴포넌트에 우아한 다크 디자인 구현
-- [x] **랜딩 페이지 subtitle 변경** - "건양대학교 대학원 세미나를 위해"
+### 작동 중
+- 23문항 검사 플로우 전체 (인구통계 → 4페이지 문항 → 추가 정보 → 결과)
+- 규준 기반 T점수·백분위 계산 (`lib/scoring.ts`, norm-data.csv)
+- 일반 해석 (T점수 5단계 × 성별/연령 맥락)
+- **AI 맞춤 해석** — `POST /api/interpret` → `lib/claude.ts` → Anthropic API (fetch 직접 호출)
+- Recharts 그래프 (규준 T점수 단일 막대)
+- 다크 테마 + 모바일 반응형
+- 검사 시작 시 세션 스토리지 초기화
+- Vercel 프로덕션 배포
 
-### 🚧 진행 중 / 예정
-- [ ] Vercel Postgres 연동
-- [ ] 데이터베이스 초기화 스크립트
-- [ ] API Routes 구현
-  - [ ] POST /api/test/submit
-  - [ ] POST /api/test/retrieve
-  - [ ] POST /api/interpret (Claude API)
-- [ ] Claude API 통합 (lib/claude.ts)
-- [ ] bcrypt 암호 해싱 (utils/password.ts)
-- [ ] Zod 입력 검증 (utils/validation.ts)
-- [ ] 결과 재조회 페이지 (app/retrieve/page.tsx)
-- [ ] Vercel 배포
-- [ ] PWA 기능 (선택사항)
-- [ ] 관리자 대시보드 (선택사항)
+### 없음 (의도적으로 제거했거나 미구현)
+- DB 연동 / API 라우트는 `/api/interpret` 하나뿐
+- 결과 재조회, 암호, 누적 T점수 — 2026-08-08 제거 (아래 "제거 이력")
+- 관리자 대시보드, PWA
+
+### 제거 이력 (2026-08-08)
+재활용을 위해 실제로 동작하지 않던 기능을 걷어냈다.
+- **결과 재조회** — DB가 없어 `/retrieve` 페이지가 조회할 대상이 없었다. 페이지 삭제 + 랜딩 버튼/안내 문구 제거.
+- **암호 설정·확인 입력란** — 재조회 전용이었고 저장조차 되지 않았다. 강의장 진입 마찰만 늘려 삭제.
+- **누적 T점수** — 시뮬레이션 값이었다(위 2.3 참조). 그래프 막대·범례·`calculateCumulative*`·타입 필드 모두 제거.
+- 결과 페이지의 "조회용 ID" 안내 박스도 함께 제거(URL의 `[id]`는 남아 있으나 어디에도 쓰이지 않는 잔재).
 
 ## 모바일 최적화
 
@@ -327,11 +235,13 @@ CREATE TABLE norm_data (
 ## 환경 변수
 
 ```bash
-# .env.local
-POSTGRES_URL="postgres://..."
+# .env.local (실제로 쓰이는 건 이 하나뿐)
 ANTHROPIC_API_KEY="sk-ant-..."
-NEXT_PUBLIC_APP_URL="https://dark-tetrad.vercel.app"
 ```
+
+**SSOT는 Vercel 환경변수**(프로젝트 `dark-tetrad-test`). 값을 바꾸면 **재배포해야 반영된다** —
+변경만 하고 방치하면 이전 빌드가 계속 옛 키로 응답한다. 빈 커밋 푸시로도 트리거된다.
+증상: `/api/interpret`이 500 + `authentication_error: invalid x-api-key`.
 
 ## 실행 방법
 
@@ -357,9 +267,7 @@ npm start
 - `calculateRawScores()`: 원점수 계산
 - `calculateNormStatistics()`: 규준 데이터 통계 계산
 - `calculateNormTScores()`: 규준 기반 T점수
-- `calculateNormPercentiles()`: 규준 기반 백분위
-- `calculateCumulativeTScores()`: 누적 데이터 기반 T점수
-- `calculateCumulativePercentiles()`: 누적 데이터 기반 백분위
+- `calculateNormPercentiles()`: 규준 기반 백분위 (T점수 → 정규분포 CDF)
 
 ### 3. lib/interpretations.ts
 - T점수 구간별 기본 해석
@@ -374,7 +282,7 @@ npm start
 ### 5. components/ScoreChart.tsx
 - Recharts 기반 바 차트
 - 4개 척도 표시
-- 규준 vs 누적 T점수 비교
+- 규준 T점수 단일 막대
 - 기준선 표시 (T=40, 50, 60)
 
 ### 6. app/test/questions/page.tsx
@@ -392,20 +300,19 @@ npm start
 
 ### 개발 중 검증
 1. **T점수 계산 검증**: 샘플 데이터로 수동 계산 vs 코드 결과 비교
-2. **DB 연결 확인**: Vercel Postgres 쿼리 테스트
+2. **AI 해석 완결성**: 응답이 문장 중간에 끊기지 않는지 (`stop_reason` 확인)
 3. **Claude API 테스트**: 프롬프트 품질 확인
 
 ### 배포 후 검증
 1. **전체 플로우 테스트**: 검사 시작 → 결과 확인
-2. **점수 정확성**: 규준 T점수와 누적 T점수 비교
+2. **점수 정확성**: 수기 계산과 규준 T점수·백분위 대조
 3. **모바일 렌더링**: 실제 스마트폰 테스트 (iOS, Android)
 4. **AI 해석 품질**: 다양한 점수 프로필로 테스트
 5. **성능**: 3G 환경에서 로딩 시간 측정
 
 ## 보안 고려사항
 
-- bcrypt 암호 해싱 (10 rounds)
-- SQL Injection 방지 (파라미터화된 쿼리)
+- 개인 정보를 서버에 저장하지 않음 (DB 없음 · 세션 스토리지만)
 - 환경변수로 API 키 관리
 - Rate limiting (API 남용 방지)
 - 개인 식별 정보 최소화
@@ -422,210 +329,30 @@ npm start
 
 ---
 
-## 📝 세션 인계 노트 (Session Handoff Notes)
+## 📝 세션 인계 노트
 
-### 최근 완료된 작업 (2026-02-10)
+### 2026-08-08 — 재활용 정비 (최신)
+"2월 14일 서비스 종료" 공지를 걸어둔 채 방치돼 있던 앱을 **다시 쓰기로 하고** 정비했다.
+- 랜딩의 종료 안내 박스 + "건양대학교 대학원 세미나를 위해" 서브타이틀 제거.
+- **AI 해석 복구** — 프로덕션 `ANTHROPIC_API_KEY`가 401(invalid)로 죽어 있었다. Vercel에서 키 rotate + 재배포로 해결. (환경변수만 바꾸면 반영 안 됨 — "환경 변수" 절 참조)
+- **AI 해석 잘림 수정** — `max_tokens` 2000 → 12000, 분량 상향. ("3.2 AI 맞춤 해석" 참조)
+- **재조회·암호·누적 T점수 제거** — "제거 이력" 참조.
+- 결과 페이지 "척도별 해석" 제목이 `text-gray-900`(다크 배경에 검정)이라 안 보이던 것 → `text-amber-200`.
 
-#### 1. 세션 스토리지 초기화 기능 구현
-- **파일**: `app/test/page.tsx`
-- **변경 내용**: 컴포넌트 마운트 시 useEffect를 통해 이전 검사 데이터 모두 삭제
-- **삭제 항목**:
-  - `testData` - 인구통계 정보
-  - `testResponses` - 문항 응답
-  - `additionalInfo` - 추가 정보
-  - `interpretationType` - 해석 방식
-- **목적**: 새로운 검사 시작 시 이전 검사의 브라우저 캐시가 남아있지 않도록 방지
+### 2026-02-10 — 다크 테마 전면 적용
+사용자 제공 팔레트(다크 그레이·브라운·베이지)로 5개 페이지 + 2개 컴포넌트를 재설계했다.
+구체적 색상 값은 아래 "다크 테마 색상 팔레트" 참조. 같은 세션에서 검사 시작 시
+세션 스토리지 초기화(`app/test/page.tsx`의 `useEffect`)도 추가했다.
 
-```typescript
-useEffect(() => {
-  sessionStorage.removeItem("testData");
-  sessionStorage.removeItem("testResponses");
-  sessionStorage.removeItem("additionalInfo");
-  sessionStorage.removeItem("interpretationType");
-}, []);
-```
-
-#### 2. 전체 애플리케이션 다크 테마 재설계
-사용자가 제공한 색상 팔레트(다크 그레이, 브라운, 베이지 톤)를 기반으로 모든 페이지와 컴포넌트를 우아한 다크 테마로 전면 재설계했습니다.
-
-**업데이트된 파일 (총 7개)**:
-
-##### 페이지 (5개)
-1. **app/page.tsx** - 랜딩 페이지
-   - 서브타이틀 변경: "건양대학교 대학원 세미나를 위해"
-   - "Professional Assessment Tool" 배지 추가
-   - 배경: `bg-gradient-to-br from-slate-900 via-neutral-900 to-stone-900`
-   - 장식 요소: 앰버 색상의 블러 효과 원형 배경
-   - 그라디언트 텍스트: `from-amber-200 via-amber-100 to-stone-200`
-   - 카드: `from-stone-800/80 to-neutral-800/80` + `border-amber-500/20`
-
-2. **app/test/page.tsx** - 검사 시작/인구통계 입력
-   - 동일한 다크 배경 및 장식 요소
-   - 폼 입력: `border-stone-600 bg-stone-900/50 text-stone-200`
-   - 선택된 버튼: `border-amber-500 bg-amber-500/20 text-amber-200`
-   - 제출 버튼: `bg-gradient-to-r from-amber-600 to-amber-500`
-
-3. **app/test/questions/page.tsx** - 검사 문항
-   - 고정 진행률 바: `bg-gradient-to-r from-stone-900/95 to-neutral-900/95`
-   - 진행 바: `bg-gradient-to-r from-amber-600 to-amber-400`
-   - 문항 번호: `bg-gradient-to-br from-amber-500 to-amber-600`
-   - 선택된 응답: `border-amber-500 bg-gradient-to-br from-amber-600 to-amber-500`
-
-4. **app/information/page.tsx** - 추가 정보 입력
-   - AI 해석 버튼: `bg-gradient-to-r from-purple-600 to-purple-500` (보라색)
-   - 일반 해석 버튼: `border-amber-500 bg-stone-900/50` (앰버 테두리)
-   - 텍스트 영역: `border-stone-600 bg-stone-900/50 focus:border-amber-500`
-
-5. **app/result/[id]/page.tsx** - 결과 페이지
-   - "Assessment Result" 배지
-   - 원점수 카드: `from-stone-900/50 to-neutral-900/50`
-   - AI 해석 섹션: `from-purple-900/40 to-indigo-900/40`
-   - 경고 섹션: `from-amber-900/30 to-amber-800/30`
-
-##### 컴포넌트 (2개)
-6. **components/ScoreChart.tsx** - 그래프
-   - 차트 배경: 다크 톤으로 변경
-   - 그리드: `stroke="#44403c"`
-   - 축: `fill="#d6d3d1"`, `stroke="#57534e"`
-   - 툴팁: `backgroundColor: "#292524"`
-   - 바: 규준(`#f59e0b`), 누적(`#d97706`)
-   - 기준선: 파란색(낮음), 초록색(평균), 빨간색(높음)
-
-7. **components/InterpretationSection.tsx** - 척도별 해석
-   - `getDarkLevelColor()` 함수로 레벨별 색상 배지
-   - T점수 카드: `from-amber-900/30 to-amber-800/30`
-   - 백분위 카드: `from-purple-900/30 to-purple-800/30`
-   - 해석 섹션: `bg-stone-900/50 border-stone-700`
-
-**디자인 특징**:
-- **일관된 색상 팔레트**:
-  - 베이스: slate-900, neutral-900, stone-900
-  - 액센트: amber-500, amber-600 (주황/금색)
-  - 보조: purple, green, blue, red (상태별)
-- **그라디언트 효과**: 배경, 텍스트, 버튼에 부드러운 그라디언트 적용
-- **투명도 활용**: `/80`, `/50`, `/30` 등으로 레이어드 효과
-- **백드롭 블러**: `backdrop-blur-sm`로 깊이감 표현
-- **장식 요소**: 블러 처리된 원형 배경, 그라디언트 바, 아이콘
-- **시각적 피드백**: hover, active 상태의 부드러운 전환
-
-### 현재 상태
-
-#### 작동 중인 기능
-✅ 프론트엔드 UI/UX 완전히 구현됨 (다크 테마)
-✅ 23문항 검사 플로우 완료
-✅ 세션 스토리지 기반 데이터 관리
-✅ T점수 계산 로직 (규준 데이터 CSV 기반)
-✅ 일반 해석 시스템 (5단계 T점수 구간)
-✅ Recharts 그래프 시각화
-✅ 모바일 반응형 디자인
-
-#### 미구현 기능 (백엔드)
-❌ 데이터베이스 연동 (Vercel Postgres)
-❌ API Routes
-❌ Claude API 통합 (AI 맞춤 해석)
-❌ 암호 해싱 (bcrypt)
-❌ 결과 재조회 기능
-
-#### 현재 제한사항
-⚠️ 모든 데이터는 세션 스토리지에만 저장 (브라우저 닫으면 사라짐)
-⚠️ 결과 페이지 ID는 하드코딩 (`/result/1`)
-⚠️ AI 해석은 표시되지 않음 (Claude API 미연동)
-⚠️ 누적 T점수는 규준 T점수와 동일 (실제 누적 데이터 없음)
-
-### 다음 단계 우선순위
-
-#### Phase 1: 백엔드 인프라 (가장 시급)
-1. **Vercel Postgres 설정**
-   - Vercel 프로젝트 생성
-   - Postgres 데이터베이스 연결
-   - `lib/db.ts` 구현
-   - 환경변수 설정 (`POSTGRES_URL`)
-
-2. **데이터베이스 초기화**
-   - `scripts/init-db.sql` 작성
-   - `test_results` 테이블 생성
-   - `norm_data` 테이블 생성
-   - `public/norm-data.csv` 임포트
-
-#### Phase 2: API Routes 구현
-1. **POST /api/test/submit**
-   - 검사 결과 수신
-   - 원점수 계산
-   - T점수/백분위 계산 (규준 + 누적)
-   - 암호 해싱 (bcrypt)
-   - DB 저장
-   - 결과 ID 반환
-
-2. **POST /api/test/retrieve**
-   - ID + 암호 수신
-   - 암호 검증
-   - 저장된 결과 반환
-
-3. **POST /api/interpret** (선택사항)
-   - Claude API 호출
-   - AI 맞춤 해석 생성
-   - 결과에 저장
-
-#### Phase 3: 프론트엔드 통합
-1. **app/information/page.tsx 수정**
-   - `handleAiInterpretation`: API 호출로 변경
-   - `handleGeneralInterpretation`: API 호출로 변경
-   - 로딩 상태 처리
-   - 에러 처리
-
-2. **app/result/[id]/page.tsx 수정**
-   - 세션 스토리지 → API 조회로 변경
-   - 동적 ID 처리
-   - 로딩/에러 상태
-
-3. **app/retrieve/page.tsx 생성**
-   - ID + 암호 입력 폼
-   - API 호출
-   - 결과 페이지로 리다이렉트
-
-#### Phase 4: Claude API 통합 (AI 해석)
-1. **lib/claude.ts 구현**
-   - Anthropic SDK 설치
-   - API 키 설정 (`ANTHROPIC_API_KEY`)
-   - 프롬프트 엔지니어링
-   - 응답 파싱
-
-2. **프롬프트 템플릿**
-   - 검사 결과 (4개 척도 T점수, 백분위)
-   - 내담자 정보 (나이, 성별, 추가 정보)
-   - 상담자 관점의 해석 요청
-   - 500-700자 제한
-
-#### Phase 5: 보안 및 검증
-1. **utils/password.ts 구현**
-   - bcrypt 해싱
-   - 암호 검증
-
-2. **utils/validation.ts 구현**
-   - Zod 스키마 정의
-   - API 입력 검증
-
-3. **보안 검토**
-   - SQL Injection 방지
-   - Rate limiting
-   - 환경변수 보안
-
-#### Phase 6: 배포 및 테스트
-1. **Vercel 배포**
-   - 환경변수 설정
-   - 데이터베이스 마이그레이션
-   - 프로덕션 빌드
-
-2. **전체 테스트**
-   - 검사 플로우 테스트
-   - 모바일 디바이스 테스트
-   - T점수 계산 정확성 검증
-   - AI 해석 품질 확인
+### 남은 과제
+- **CLAUDE.md 자체가 계획 문서로 출발해 실제와 벌어지기 쉽다.** 기능 제거·추가 시 이 파일을 같이 고칠 것.
+- 결과 URL의 `[id]`는 쓰이지 않는 잔재 — 정리하려면 `/information`의 `generateResultId` 경로까지 함께 손봐야 한다.
+- 참가자 데이터 수집이 필요해지면 Supabase 연동이 첫 단추(그 뒤에야 누적 T점수·재조회가 성립).
 
 ### 주요 코드 참조
 
 #### 세션 스토리지 키
-- `testData`: `{ gender: "1" | "2", age: string, password: string }`
+- `testData`: `{ gender: "1" | "2", age: string }`
 - `testResponses`: `{ dtmc1: number, dtmc2: number, ..., dtsd6: number }`
 - `additionalInfo`: `{ personality: string, growthBackground: string, stressFactors: string, otherInfo: string }`
 - `interpretationType`: `"ai" | "general"`
@@ -713,10 +440,9 @@ const testResponses = {
 - **Tailwind CSS**: https://tailwindcss.com/docs
 - **Recharts**: https://recharts.org/en-US/
 - **Anthropic API**: https://docs.anthropic.com/
-- **Vercel Postgres**: https://vercel.com/docs/storage/vercel-postgres
 
 ---
 
-**마지막 업데이트**: 2026-02-10
-**다음 세션 시작점**: Phase 1 - Vercel Postgres 설정 및 데이터베이스 초기화
-**현재 개발 서버**: `http://localhost:3002` (npm run dev)
+**마지막 업데이트**: 2026-08-08
+**프로덕션**: https://dark-tetrad-test.vercel.app (정상 · AI 해석 포함 전 기능 동작)
+**개발 서버**: `npm run dev` (기본 3000, 점유 시 자동 증가)
